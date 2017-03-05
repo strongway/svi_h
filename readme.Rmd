@@ -1,0 +1,52 @@
+---
+title: "Read Me"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+Quasi-explicit calibration of the modified SVI model. The optimization method follows Martini & Marco (2009), with some modificiation. 
+
+The modified SVI function is:
+
+$$ v(x) = [a + b(\rho(x-m)+\sqrt{(x-m)^2 + \sigma^2})]^H
+$$
+
+Given that the function has 6 parameters, and many local minimums, two-step quasi-explicit calibration method has some  advantages to find global optimal parameters. 
+
+Read a sample chain (iv.csv, $\tau = 0.12$ ), and fit with the two-step optimization.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+source('svi_h.R')
+# read one sample ivs at tau = 0.12
+tau = 0.12
+c <- read.csv('iv.csv')
+# measure estimation time
+ptm <- proc.time()
+param <- fit_ga_svi(c$k,c$iv,tau)
+#show how long it takes for estimate the parameters
+print(proc.time()-ptm)
+
+print(param)
+```
+
+```{r}
+
+# SVI parameterized IV estimation
+c$svi <- svi_fun(c$k,as.numeric(param[1,2:7]))/sqrt(tau)
+
+# plot fitting results
+ggplot(c, aes(x = k, y = iv)) + geom_point()  + 
+  geom_line(aes(y = svi), color = 'red')
+```
+
+```{r}
+c$err = c$iv - c$svi
+
+ggplot(c, aes(x = k, y = err)) + geom_point()
+print(sd(c$err))
+```
+
