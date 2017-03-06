@@ -5,6 +5,12 @@ output:
   html_notebook: default
   pdf_document: default
 ---
+```{r include=FALSE, cache = FALSE}
+library(dplyr)
+library(ggplot2)
+source('svi_h.R')
+
+```
 
 Quasi-explicit calibration of the modified SVI model. The optimization method follows Martini & Marco (2009), with some modificiation. 
 
@@ -18,15 +24,17 @@ Given that the function has 6 parameters, and many local minimums, two-step quas
 Read a sample chain (iv.csv, $\tau = 0.12$ ), and fit with the two-step optimization.
 
 ```{r}
-library(dplyr)
-library(ggplot2)
-source('svi_h.R')
 # read one sample ivs at tau = 0.12
 tau = 0.12
 c <- read.csv('iv.csv')
 # measure estimation time
 ptm <- proc.time()
 param <- fit_ga_svi(c$k,c$iv,tau)
+#show how long it takes for estimate the parameters
+print(proc.time()-ptm)
+
+ptm <- proc.time()
+param <- fit_svih(c$k,c$iv,tau, 0.95)
 #show how long it takes for estimate the parameters
 print(proc.time()-ptm)
 
@@ -49,4 +57,17 @@ c$err = c$iv - c$svi
 ggplot(c, aes(x = k, y = err)) + geom_point()
 print(sd(c$err))
 ```
+Using `par_fit_svi` function, one can fit the whole surface with paralell computation. An example is shown below:
+```{r}
+# read a chain
+library(parallel)
+c2 <- read.csv('chain.csv')
+# suppose now H = 0.65. This can be done by using genetic algo
+ptm <- proc.time()
+para <- par_fit_svi(c2, 0.65)
+print(proc.time()-ptm)
+
+print(para)
+```
+
 
